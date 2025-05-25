@@ -23,17 +23,16 @@ def index():
 def move_share():
     files = [file for file in os.listdir('files')]
     files.pop(0)
-    return render_template('share.html', files=files)
+    return render_template('share.html',files=files)
 
 
 # ファイルのアップロードを行う
-@app.route('/upload', methods=["POST"])
+@app.route('/upload',methods=["POST"])
 def upload():
-    global is_shared
-    files = request.files.getlist('file')
-    name = request.form.get('text')
-    extension = request.form.get('ext')
-    is_shared = request.form.get('is_shared')
+    files = request.files.getlist('input_file')
+    name = request.form.get('input_text')
+    extension = request.form.get('input_ext')
+    is_shared = request.form.get('input_is_shared')
 
     # ファイルが存在しない、またはファイル名が空の場合
     for file in files:
@@ -48,15 +47,15 @@ def upload():
         file_name = 'uploaded_' + secure_filename(file.filename or 'default_name')
         file_name_list.append(file_name)
         # Exifの向きを補正して保存
-        save_uploaded_image(file, file_name)
+        save_uploaded_image(file,file_name)
 
     img_list = []
     for i in range(len(file_name_list)):
         opened_file = Image.open(file_name_list[i])
         img_list.append(opened_file)
 
-    after_file_path = os.path.join('files', name + '.' + extension)
-    image_combination(img_list).save(after_file_path, ext_dict[extension])
+    after_file_path = os.path.join('files',name + '.' + extension)
+    image_combination(img_list).save(after_file_path,ext_dict[extension])
 
     delete_before_file(file_name_list)
     
@@ -83,7 +82,7 @@ def download(file):
         mimetype='application/octet-stream',
         headers={
             # UTF-8でエンコードされたファイル名を指定
-            'Content-Disposition': f"attachment; filename*=UTF-8''{encoded_file_name}"
+            'Content-Disposition':f"attachment; filename*=UTF-8''{encoded_file_name}"
         }
     )
     # ファイル送信後に削除
@@ -97,7 +96,7 @@ def download(file):
 # 共有されたファイルのダウンロードを行う
 @app.route('/download/<string:file>')
 def shared_download(file):
-    file_path = os.path.join('files', file)
+    file_path = os.path.join('files',file)
     
     if not os.path.exists(file_path):
         return redirect(url_for('move_share'))
@@ -111,10 +110,11 @@ def shared_download(file):
         mimetype='application/octet-stream',
         headers={
             # UTF-8でエンコードされたファイル名を指定
-            'Content-Disposition': f"attachment; filename*=UTF-8''{encoded_file_name}"
+            'Content-Disposition':f"attachment; filename*=UTF-8''{encoded_file_name}"
         }
     )
     return response
+
 # 共有されたファイルを削除する
 @app.route('/delete/<string:file>')
 def delete(file):
